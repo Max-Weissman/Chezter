@@ -1,0 +1,20 @@
+{
+  "name": "phasergame",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "build",
+    "devstart": "webpack & node app.js",
+    "start": "node app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "phaser": "^3.87.0",
+    "webpack": "^5.97.1"
+  },
+  "devDependencies": {
+    "webpack-cli": "^6.0.1"
+  }
+}
