@@ -1,6 +1,7 @@
 import { Game, Scene, GameObjects, AUTO } from "phaser";
 
 let w
+let timeout = false
 
 class Unit extends GameObjects.Sprite {
 
@@ -18,6 +19,14 @@ class Unit extends GameObjects.Sprite {
     takeDamage(damage) {
         this.hp -= damage
         this.healthbar.update()
+    }
+
+    activeTurn(){
+        this.clearTint()
+    }
+
+    endTurn(){
+        this.setTint(0xffaaff, 0xffffff, 0xffffff, 0xffffff)
     }
 }
 
@@ -62,6 +71,16 @@ class Healthbar extends GameObjects.Sprite{
 
 class BattleScene extends Scene {
 
+    // end current unit's turn and move to next
+    nextUnit () {
+        this.units[this.turn].endTurn()
+
+        this.turn = this.turn + 1
+        if (this.turn === this.units.length) this.turn = 0
+
+        this.units[this.turn].activeTurn()
+    }
+
     preload () {
         this.load.image('cracker', 'assets/Cracker.jfif');
     }
@@ -82,15 +101,38 @@ class BattleScene extends Scene {
         // Add healthbars
         for (const unit of this.units) {
             unit.healthbar = new Healthbar(this, unit)
+            unit.endTurn()
         }
 
         w = this.input.keyboard.addKey('w')
+
+        // turn order index tracker
+        this.turn = 0
+        this.units[this.turn].activeTurn()
     }
 
     update() {
-        if (w.isDown){
-            this.units[0].attack(this.units[1])
+        // Dont update during this time
+        if (timeout) return
+
+        const current_unit = this.units[this.turn]
+
+        // perform actions of all units
+        if (current_unit.type === 'Player'){
+            if (w.isDown){
+                current_unit.attack(this.units[1])
+                this.nextUnit()
+            }
+        } else {
+            timeout = true
+            setTimeout(() => {
+                current_unit.attack(this.units[0])
+                this.nextUnit()
+                timeout = false
+            }, 1000)
+
         }
+
     }
 
 }
