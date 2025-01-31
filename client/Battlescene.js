@@ -30,27 +30,26 @@ class Unit extends GameObjects.Sprite {
     }
 }
 
-class Healthbar extends GameObjects.Sprite{
+class Healthbar extends GameObjects.Graphics{
 
     constructor(scene, unit) {
+        super(scene)
+
         const unitWidth = unit.width * 0.02
         const unitHeight = unit.height * 0.02
 
-        const x = unit.x - ((unitWidth + 45) / 2)
-        const y = unit.y - ((unitHeight + 20) / 2)
+        this.x = unit.x - ((unitWidth + 45) / 2)
+        this.y = unit.y - ((unitHeight + 20) / 2)
 
-        const texture = scene.add.graphics()
-
-        texture.lineStyle(2, 0xffffff);
-        texture.fillStyle(0x0FFF00, 1); // green
+        this.lineStyle(2, 0xffffff);
+        this.fillStyle(0x0FFF00, 1); // green
         
-        texture.strokeRect(x, y, 90, 5);
-        texture.fillRect(x, y, 90, 5);
+        this.strokeRect(0, 0, 90, 5);
+        this.fillRect(0, 0, 90, 5);
 
-        super(scene, x, y, texture)
-
-        this.texture = texture
         this.unit = unit
+
+        scene.add.existing(this)
     }
 
     update(){
@@ -60,11 +59,11 @@ class Healthbar extends GameObjects.Sprite{
         // cant miss more than 100% of hp
         if (ratio > 1) ratio = 1
 
-        this.texture.fillStyle(0x0FFF00, 1); // green
-        this.texture.fillRect(this.x, this.y, 90, 5);
+        this.fillStyle(0x0FFF00, 1); // green
+        this.fillRect(0, 0, 90, 5);
 
-        this.texture.fillStyle(0xFF0000, 1) // red
-        this.texture.fillRect(this.x + (90 * (1 - ratio)), this.y, 90 * ratio, 5);
+        this.fillStyle(0xFF0000, 1) // red
+        this.fillRect(0 + (90 * (1 - ratio)), 0, 90 * ratio, 5);
     }
 
 }
@@ -84,6 +83,12 @@ class BattleScene extends Scene {
         if (this.turn === this.units.length) this.turn = 0
 
         this.units[this.turn].activeTurn()
+    }
+
+    removeUnit (index) {
+        const unit = (this.units.splice(index, 1))[0]
+        unit.healthbar.destroy()
+        unit.destroy()
     }
 
     preload () {
@@ -156,6 +161,12 @@ class BattleScene extends Scene {
                 timeout = false
             }, 1000)
 
+        }
+
+        for (let i = 0; i < this.units.length; i++){
+            if (this.units[i].hp <= 0){
+                this.removeUnit(i)
+            }
         }
 
     }
