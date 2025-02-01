@@ -71,8 +71,12 @@ class Healthbar extends GameObjects.Graphics{
 class BattleScene extends Scene {
 
     constructor (units) {
-        super()
+        super({key: 'BattleScene'})
         this.unitIds = units
+    }
+
+    toWorld () {
+        this.scene.switch('WorldScene')
     }
 
     // end current unit's turn and move to next
@@ -163,10 +167,24 @@ class BattleScene extends Scene {
 
         }
 
+        // check if each unit has not health left
         for (let i = 0; i < this.units.length; i++){
             if (this.units[i].hp <= 0){
                 this.removeUnit(i)
             }
+        }
+
+        // return to world if no enemy
+        let noEnemy = true
+
+        for (let unit of this.units){
+            if (unit.type === 'Enemy'){
+                noEnemy = false
+            }
+        }
+
+        if (noEnemy){
+            this.toWorld()
         }
 
     }
