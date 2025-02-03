@@ -24,7 +24,7 @@ class WorldScene extends Scene {
     }
 
     create () {
-        this.cameras.main.setBackgroundColor(0x0FFF00) // green
+        this.limestone = this.add.tileSprite(0, 0, 1000, 1000, 'limestone').setOrigin(0).setScrollFactor(0)
 
         this.player = this.physics.add.sprite(50, 50, this.sprites[0].name)
         this.player.setScale(this.sprites[0].scale)
