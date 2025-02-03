@@ -5,33 +5,6 @@ let a
 let s
 let d
 
-class Unit extends GameObjects.Sprite {
-
-    constructor(scene, x, y, texture, frame, type, hp, damage) {
-        super(scene, x, y, texture, frame)
-        this.type = type;
-        this.maxHp = this.hp = hp;
-        this.damage = damage; // default damage            
-    }
-
-    attack(target){
-        target.takeDamage(this.damage)
-    }
-
-    takeDamage(damage) {
-        this.hp -= damage
-        this.healthbar.update()
-    }
-
-    activeTurn(){
-        this.clearTint()
-    }
-
-    endTurn(){
-        this.setTint(0xffaaff, 0xffffff, 0xffffff, 0xffffff)
-    }
-}
-
 class WorldScene extends Scene {
 
     constructor (sprites) {
