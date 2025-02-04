@@ -1,4 +1,4 @@
-import { Scene, GameObjects } from "phaser";
+import { Scene } from "phaser";
 
 let w
 let a
@@ -12,9 +12,10 @@ class WorldScene extends Scene {
         this.sprites = sprites
     }
 
-    toBattle () {
+    startText () {
         this.enemy.destroy()
-        this.scene.switch('BattleScene')
+        this.scene.pause('WorldScene')
+        this.scene.launch('Textbox')
     }
 
     preload () {
@@ -36,7 +37,7 @@ class WorldScene extends Scene {
         this.enemy.setScale(this.sprites[1].scale)
 
         // move to battlescene when player and enemy collide
-        this.physics.add.collider(this.player, this.enemy, this.toBattle, null, this)
+        this.physics.add.collider(this.player, this.enemy, this.startText, null, this)
 
         w = this.input.keyboard.addKey('w')
         a = this.input.keyboard.addKey('a')
