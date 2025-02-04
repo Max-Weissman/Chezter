@@ -35,11 +35,11 @@ class Healthbar extends GameObjects.Graphics{
     constructor(scene, unit) {
         super(scene)
 
-        const unitWidth = unit.width * 0.02
-        const unitHeight = unit.height * 0.02
+        const unitWidth = unit.width * unit.scale
+        const unitHeight = unit.height * unit.scale
 
-        this.x = unit.x - ((unitWidth + 45) / 2)
-        this.y = unit.y - ((unitHeight + 20) / 2)
+        this.x = unit.x - 45
+        this.y = unit.y - ((unitHeight) / 2)
 
         this.lineStyle(2, 0xffffff);
         this.fillStyle(0x0FFF00, 1); // green
@@ -104,6 +104,8 @@ class BattleScene extends Scene {
     create () {
         this.cameras.main.setBackgroundColor(0x0FFF00) // green
 
+        this.limestone = this.add.tileSprite(0, 0, 800, 600, 'limestone').setOrigin(0.1, -0.1).setScale(3, 2)
+
         this.units = []
         this.players = 0
         this.enemies = 0
@@ -120,11 +122,11 @@ class BattleScene extends Scene {
             } else {
                 this.enemies++
                 row = this.enemies
-                column = 450
+                column = 550
             }
 
-			const sprite = new Unit(this, column, row * 50, unit.name, null, unit.type, unit.hp, unit.damage);
-       		sprite.setScale(unit.scale)
+			const sprite = new Unit(this, column, row * 50 + 300, unit.name, null, unit.type, unit.hp, unit.damage);
+       		sprite.setScale(unit.scale * 5)
         	this.add.existing(sprite);
 			this.units.push(sprite)
 		}

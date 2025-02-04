@@ -18,13 +18,14 @@ class WorldScene extends Scene {
     }
 
     preload () {
+        this.load.image('limestone', 'assets/Limestone.png')
 		for (const sprite of this.sprites){
             if (sprite.image) this.load.image(sprite.name, sprite.image)
 		}
     }
 
     create () {
-        this.limestone = this.add.tileSprite(0, 0, 1000, 1000, 'limestone').setOrigin(0).setScrollFactor(0)
+        this.limestone = this.add.tileSprite(0, 0, 1000, 1000, 'limestone').setOrigin(0)
 
         this.player = this.physics.add.sprite(50, 50, this.sprites[0].name)
         this.player.setScale(this.sprites[0].scale)
