@@ -98,6 +98,7 @@ class BattleScene extends Scene {
     preload () {
 		for (const unit of this.unitIds){
             if (unit.image) this.load.image(unit.name, unit.image)
+            else if (unit.spritesheet) this.load.spritesheet(unit.name, unit.spritesheet, unit.framesize)
 		}
     }
 
@@ -145,16 +146,42 @@ class BattleScene extends Scene {
         // turn order index tracker
         this.turn = 0
         this.units[this.turn].activeTurn()
+
+        // animations for Chexter
+        this.anims.create({
+            key: 'bendKnees',
+            defaultTextureKey: 'chexter',
+            frames: [
+                {frame: 0},
+                {frame: 9}
+            ],
+            frameRate: 10
+        })
+        this.anims.create({
+            key: 'flailArms',
+            defaultTextureKey: 'chexter',
+            frames: [
+                {frame: 6},
+                {frame: 7},
+            ],
+            frameRate: 20
+        })
+
+
     }
 
     update() {
-        // Dont update during this time
-        if (timeout) return
-
         const current_unit = this.units[this.turn]
+
+        // Dont update during this time
+        if (timeout){
+            this.units[0].anims.play('flailArms', true)
+            return
+        } 
 
         // perform actions of all units
         if (current_unit.type === 'Player'){
+            current_unit.anims.play('bendKnees', true)
             if (w.isDown){
                 current_unit.attack(this.units[1])
                 this.nextUnit()
