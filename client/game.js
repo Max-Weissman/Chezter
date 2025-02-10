@@ -1,7 +1,7 @@
 import { Game, AUTO } from "phaser";
-import WorldScene from './Worldscene'
-import BattleScene from "./Battlescene";
-import Textbox from './Textbox'
+import WorldScene from './Scenes/Worldscene'
+import BattleScene from "./Scenes/Battlescene";
+import Textbox from './Scenes/Textbox'
 
 const player = {name: 'chexter', spritesheet: 'assets/Chexter.png', framesize: {frameWidth: 32, frameHeight: 32}, type: 'Player', hp: 100, damage: 20, scale: 1.2}
 const enemy = {name: 'cracker', spritesheet: 'assets/Oyster.png', framesize: {frameWidth: 32, frameHeight: 32}, type: 'Enemy', scale: 1.2,  hp: 100, damage: 20}
