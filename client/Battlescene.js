@@ -167,6 +167,33 @@ class BattleScene extends Scene {
             frameRate: 20
         })
 
+        
+        // animations for cracker
+        this.anims.create({
+            key: 'spinJump',
+            defaultTextureKey: 'cracker',
+            frames: [
+                {frame: 0},
+                {frame: 1},
+                {frame: 2},
+                {frame: 1},
+                {frame: 0},
+                {frame: 3},
+                {frame: 4},
+                {frame: 3},
+                {frame: 0},
+                {frame: 0},
+                {frame: 0},
+                {frame: 0},
+                {frame: 5},
+                {frame: 0},
+                {frame: 0},
+                {frame: 0},
+                {frame: 0},
+                
+            ],
+            frameRate: 10
+        })
 
     }
 
@@ -182,6 +209,7 @@ class BattleScene extends Scene {
         // perform actions of all units
         if (current_unit.type === 'Player'){
             current_unit.anims.play('bendKnees', true)
+            this.units[1].play('spinJump', true)
             if (w.isDown){
                 current_unit.attack(this.units[1])
                 this.nextUnit()

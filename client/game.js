@@ -4,7 +4,7 @@ import BattleScene from "./Battlescene";
 import Textbox from './Textbox'
 
 const player = {name: 'chexter', spritesheet: 'assets/Chexter.png', framesize: {frameWidth: 32, frameHeight: 32}, type: 'Player', hp: 100, damage: 20, scale: 1.2}
-const enemy = {name: 'cracker', image: 'assets/Cracker.png', type: 'Enemy', scale: 0.02,  hp: 100, damage: 20}
+const enemy = {name: 'cracker', spritesheet: 'assets/Oyster.png', framesize: {frameWidth: 32, frameHeight: 32}, type: 'Enemy', scale: 1.2,  hp: 100, damage: 20}
 
 const conversation = [
 	{text: 'hey', name: 'Cracker', color: 'green'},

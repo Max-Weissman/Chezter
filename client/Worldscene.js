@@ -34,11 +34,11 @@ class WorldScene extends Scene {
 
         player.setCollideWorldBounds(true);
 
-        this.enemy = this.physics.add.sprite(200, 200, this.sprites[1].name)
-        this.enemy.setScale(this.sprites[1].scale)
+        const enemy = this.enemy = this.physics.add.sprite(200, 200, this.sprites[1].name)
+        enemy.setScale(this.sprites[1].scale)
 
         // move to battlescene when player and enemy collide
-        this.physics.add.collider(player, this.enemy, this.startText, null, this)
+        this.physics.add.collider(player, enemy, this.startText, null, this)
 
         // keyboard inputs for movement
         w = this.input.keyboard.addKey('w')
