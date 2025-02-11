@@ -127,11 +127,17 @@ class BattleScene extends Scene {
             }
 
 			const sprite = new Unit(this, column, row * 50 + 300, unit.name, null, unit.type, unit.hp, unit.damage);
+            sprite.name = unit.name
        		sprite.setScale(unit.scale * 5)
+
         	this.add.existing(sprite);
 			this.units.push(sprite)
-		}
 
+            // add animations
+            for (const key in unit.animFrames){
+                this.anims.create(unit.animFrames[key])
+            }
+		}
 
         // Add healthbars
         for (const unit of this.units) {
@@ -146,55 +152,6 @@ class BattleScene extends Scene {
         // turn order index tracker
         this.turn = 0
         this.units[this.turn].activeTurn()
-
-        // animations for Chexter
-        this.anims.create({
-            key: 'bendKnees',
-            defaultTextureKey: 'chexter',
-            frames: [
-                {frame: 0},
-                {frame: 9}
-            ],
-            frameRate: 10
-        })
-        this.anims.create({
-            key: 'flailArms',
-            defaultTextureKey: 'chexter',
-            frames: [
-                {frame: 6},
-                {frame: 7},
-            ],
-            frameRate: 20
-        })
-
-        
-        // animations for cracker
-        this.anims.create({
-            key: 'spinJump',
-            defaultTextureKey: 'cracker',
-            frames: [
-                {frame: 0},
-                {frame: 1},
-                {frame: 2},
-                {frame: 1},
-                {frame: 0},
-                {frame: 3},
-                {frame: 4},
-                {frame: 3},
-                {frame: 0},
-                {frame: 0},
-                {frame: 0},
-                {frame: 0},
-                {frame: 5},
-                {frame: 0},
-                {frame: 0},
-                {frame: 0},
-                {frame: 0},
-                
-            ],
-            frameRate: 10
-        })
-
     }
 
     update() {
@@ -202,14 +159,17 @@ class BattleScene extends Scene {
 
         // Dont update during this time
         if (timeout){
-            this.units[0].anims.play('flailArms', true)
+            this.units[0].anims.play('attack' + this.units[0].name, true)
             return
         } 
 
+        // play all idle animations
+        for (const unit of this.units){
+            unit.anims.play('idle' + unit.name, true)
+        }
+
         // perform actions of all units
         if (current_unit.type === 'Player'){
-            current_unit.anims.play('bendKnees', true)
-            this.units[1].play('spinJump', true)
             if (w.isDown){
                 current_unit.attack(this.units[1])
                 this.nextUnit()
