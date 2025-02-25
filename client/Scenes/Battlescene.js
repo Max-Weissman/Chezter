@@ -171,8 +171,23 @@ class BattleScene extends Scene {
         // perform actions of all units
         if (current_unit.type === 'Player'){
             if (w.isDown){
-                current_unit.attack(this.units[1])
+                current_unit.attack(this.units[1]) 
                 this.nextUnit()
+                this.tweens.chain({
+                    targets: this.units[0],
+                    ease: 'linear',
+                    tweens: [
+                        {
+                            x: '500',
+                            duration: 300,
+                            rotation: 0.25
+                        }, {
+                            x: '250',
+                            duration: 500,
+                            rotation: 0
+                        }
+                    ],
+                })
             }
         } else {
             timeout = true

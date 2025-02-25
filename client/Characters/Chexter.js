@@ -12,7 +12,7 @@ export default {
 		defaultTextureKey: 'chexter',
 		frames: [
 			{frame: 0},
-			{frame: 9}
+			{frame: 6}
 		],
 		frameRate: 10
 	},
@@ -20,8 +20,8 @@ export default {
 		key: 'attack',
 		defaultTextureKey: 'chexter',
 		frames: [
-			{frame: 6},
 			{frame: 7},
+			{frame: 8},
 		],
 		frameRate: 20
 	}
