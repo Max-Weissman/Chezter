@@ -12,7 +12,10 @@ class Unit extends GameObjects.Sprite {
         this.damage = damage; // default damage            
     }
 
-    attack(target){
+    attack(target, preAttack, postAttack){
+        // pause update during attacks
+        timeout = true
+
         const player = this.type === 'Player'
         let quickTime = 1
 
@@ -26,19 +29,29 @@ class Unit extends GameObjects.Sprite {
                 targets: this.attackBar.attackArrow,
                 ease: 'linear',
                 x: '+=85',
-                duration: 300,
+                duration: preAttack,
                 onComplete: () => {
                     attackBar.hide()
                     attackBar.attackArrow.x -= 85
                 }
             })
 
-            setTimeout(() => {
-                // blue section of attack bar
-                if (w.isDown){
+            const timer = Date.now()
+
+            // check when w key is released for quick time multiplier
+            w.on('up', () => {
+                const time = Date.now() - timer
+
+                if (time > preAttack / 3 && time < preAttack * 2 / 3) {
                     quickTime = 2
+                } else {
+                    w.off('up')
                 }
-            }, 150)
+            })
+
+            setTimeout(() => {
+                w.off('up')
+            }, preAttack)
         }
 
         // animation to move sprites when attacking
@@ -51,19 +64,25 @@ class Unit extends GameObjects.Sprite {
             tweens: [
                 {
                     x: player ? x : reverseX,
-                    duration: 300,
+                    duration: preAttack,
                     rotation: 0.25
                 }, {
                     x: player ? reverseX : x,
-                    duration: 500,
+                    duration: postAttack,
                     rotation: 0
                 }
             ],
         })
 
+        // take damage when attack hits
         setTimeout(() => {
             target.takeDamage(this.damage * quickTime)
-        }, 300)
+            setTimeout(() => {
+                this.scene.nextUnit()
+                timeout = false
+            }, postAttack)
+        }, preAttack)
+
     }
 
     takeDamage(damage) {
@@ -232,6 +251,7 @@ class BattleScene extends Scene {
 
 			const sprite = new Unit(this, column, row * 50 + 300, unit.name, null, unit.type, unit.hp, unit.damage);
             sprite.name = unit.name
+            sprite.animFrames = Object.keys(unit.animFrames)
        		sprite.setScale(unit.scale * 5)
 
         	this.add.existing(sprite);
@@ -265,32 +285,29 @@ class BattleScene extends Scene {
 
     update() {
         const current_unit = this.units[this.turn]
+       
+        // play all animations
+        for (const unit of this.units){
+            // attack animations occur on units turn when attacking
+            if (timeout && current_unit === unit && unit.animFrames.includes('attack' + unit.name)){
+                unit.anims.play('attack' + unit.name, true)
+            } else {
+                unit.anims.play('idle' + unit.name, true)
+            }
+        }
 
         // Dont update during this time
         if (timeout){
-            this.units[0].anims.play('attack' + this.units[0].name, true)
             return
         } 
-
-        // play all idle animations
-        for (const unit of this.units){
-            unit.anims.play('idle' + unit.name, true)
-        }
 
         // perform actions of all units
         if (current_unit.type === 'Player'){
             if (w.isDown){
-                current_unit.attack(this.units[1]) 
-                this.nextUnit()
+                current_unit.attack(this.units[1], 1000, 500) 
             }
         } else {
-            timeout = true
-            setTimeout(() => {
-                current_unit.attack(this.units[0])
-                this.nextUnit()
-                timeout = false
-            }, 1000)
-
+            current_unit.attack(this.units[0], 1000, 1000)
         }
 
         // check if each unit has not health left
