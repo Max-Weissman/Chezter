@@ -13,7 +13,57 @@ class Unit extends GameObjects.Sprite {
     }
 
     attack(target){
-        target.takeDamage(this.damage)
+        const player = this.type === 'Player'
+        let quickTime = 1
+
+        // attackbar animation for player
+        if (player){
+            const attackBar = this.attackBar
+
+            attackBar.show()
+
+            this.scene.tweens.add({
+                targets: this.attackBar.attackArrow,
+                ease: 'linear',
+                x: '+=85',
+                duration: 300,
+                onComplete: () => {
+                    attackBar.hide()
+                    attackBar.attackArrow.x -= 85
+                }
+            })
+
+            setTimeout(() => {
+                // blue section of attack bar
+                if (w.isDown){
+                    quickTime = 2
+                }
+            }, 150)
+        }
+
+        // animation to move sprites when attacking
+        const x = '+=200'
+        const reverseX = '-=200'
+
+        this.scene.tweens.chain({
+            targets: this,
+            ease: 'linear',
+            tweens: [
+                {
+                    x: player ? x : reverseX,
+                    duration: 300,
+                    rotation: 0.25
+                }, {
+                    x: player ? reverseX : x,
+                    duration: 500,
+                    rotation: 0
+                }
+            ],
+        })
+
+        setTimeout(() => {
+            target.takeDamage(this.damage * quickTime)
+        }, 300)
     }
 
     takeDamage(damage) {
@@ -35,7 +85,6 @@ class Healthbar extends GameObjects.Graphics{
     constructor(scene, unit) {
         super(scene)
 
-        const unitWidth = unit.width * unit.scale
         const unitHeight = unit.height * unit.scale
 
         this.x = unit.x - 45
@@ -66,6 +115,61 @@ class Healthbar extends GameObjects.Graphics{
         this.fillRect(0 + (90 * (1 - ratio)), 0, 90 * ratio, 5);
     }
 
+}
+
+class Attackbar extends GameObjects.Graphics{
+
+    constructor(scene, unit) {
+        super(scene)
+
+        const unitHeight = unit.height * unit.scale
+
+        this.x = unit.x - 45
+        this.y = unit.y - ((unitHeight) / 2) - 50
+
+        this.lineStyle(2, 0xffffff);
+        this.fillStyle(0x0FFF00, 1); // green
+        
+        this.strokeRect(0, 0, 90, 5);
+        this.fillRect(0, 0, 90, 5);
+
+        this.fillStyle(0x0000FF, 1); // blue
+        this.fillRect(30, 0, 30, 5)
+
+        this.attackArrow = new Attackarrow(scene, unit)
+
+        this.unit = unit
+
+        this.hide()
+        scene.add.existing(this)
+        scene.add.existing(this.attackArrow)
+    }
+
+    hide () {
+        this.setVisible(false)
+        this.attackArrow.setVisible(false)
+    }
+
+    show () {
+        this.setVisible(true)
+        this.attackArrow.setVisible(true)
+    }
+}
+
+class Attackarrow extends GameObjects.Graphics{
+
+    constructor(scene, unit) {
+        super(scene)
+
+        const unitHeight = unit.height * unit.scale
+
+        this.x = unit.x - 45
+        this.y = unit.y - ((unitHeight) / 2) - 55
+
+        this.fillStyle(0x000000, 1); // black
+        
+        this.fillRect(0, 0, 5, 8);
+    }
 }
 
 class BattleScene extends Scene {
@@ -142,6 +246,11 @@ class BattleScene extends Scene {
         // Add healthbars
         for (const unit of this.units) {
             unit.healthbar = new Healthbar(this, unit)
+
+            if (unit.type === 'Player'){
+                unit.attackBar = new Attackbar(this, unit)
+            }
+            
             unit.endTurn()
         }
 
@@ -173,21 +282,6 @@ class BattleScene extends Scene {
             if (w.isDown){
                 current_unit.attack(this.units[1]) 
                 this.nextUnit()
-                this.tweens.chain({
-                    targets: this.units[0],
-                    ease: 'linear',
-                    tweens: [
-                        {
-                            x: '500',
-                            duration: 300,
-                            rotation: 0.25
-                        }, {
-                            x: '250',
-                            duration: 500,
-                            rotation: 0
-                        }
-                    ],
-                })
             }
         } else {
             timeout = true
