@@ -1,6 +1,7 @@
 import { Scene, GameObjects } from "phaser";
 
-let w
+const keyNames = ['a', 'd', 'space']
+const keys = {}
 let timeout = false
 
 class Unit extends GameObjects.Sprite {
@@ -14,7 +15,7 @@ class Unit extends GameObjects.Sprite {
 
     attack(target, preAttack, postAttack){
         // pause update during attacks
-        timeout = true
+        timeout = 'attack'
 
         const player = this.type === 'Player'
         let quickTime = 1
@@ -39,18 +40,18 @@ class Unit extends GameObjects.Sprite {
             const timer = Date.now()
 
             // check when w key is released for quick time multiplier
-            w.on('up', () => {
+            keys.space.on('up', () => {
                 const time = Date.now() - timer
 
                 if (time > preAttack / 3 && time < preAttack * 2 / 3) {
                     quickTime = 2
                 } else {
-                    w.off('up')
+                    keys.space.off('up')
                 }
             })
 
             setTimeout(() => {
-                w.off('up')
+                keys.space.off('up')
             }, preAttack)
         }
 
@@ -191,6 +192,50 @@ class Attackarrow extends GameObjects.Graphics{
     }
 }
 
+class Buttons extends GameObjects.Group{
+
+    constructor(scene, unit) {
+        const frames = 5
+
+        super(scene, [{
+            key: 'buttons',
+            frame: Array(frames).fill(0).map((_, i) => i),
+            setXY: {
+                x: unit.x - ((frames - 1) / 2) * 100,
+                y: unit.y - 150,
+                stepX: 100
+            }
+
+        }])
+
+        this.getChildren().forEach((child, i) => child.setFrame(i))
+
+        this.frames = frames
+    }
+
+    right () {
+        this.getChildren().forEach(child => {
+            const frame = child.frame.name
+            if (frame <= 0){
+                child.setFrame(this.frames - 1)
+            } else {
+                child.setFrame(frame - 1)
+            }
+        })
+    }
+
+    left () {
+        this.getChildren().forEach(child => {
+            const frame = child.frame.name
+            if (frame >= this.frames - 1){
+                child.setFrame(0)
+            } else {
+                child.setFrame(frame + 1)
+            }
+        })
+    }
+}
+
 class BattleScene extends Scene {
 
     constructor (units) {
@@ -223,6 +268,7 @@ class BattleScene extends Scene {
             if (unit.image) this.load.image(unit.name, unit.image)
             else if (unit.spritesheet) this.load.spritesheet(unit.name, unit.spritesheet, unit.framesize)
 		}
+        this.load.spritesheet('buttons', 'assets/Buttons.png', {frameWidth: 32, frameHeight: 32 })
     }
 
     create () {
@@ -269,14 +315,18 @@ class BattleScene extends Scene {
 
             if (unit.type === 'Player'){
                 unit.attackBar = new Attackbar(this, unit)
+                this.buttons = new Buttons(this, unit)
+                this.add.existing(this.buttons)
             }
             
             unit.endTurn()
         }
 
         // Player action text and event tracker
-        w = this.input.keyboard.addKey('w')
-        this.add.text(this.units[0].x, this.units[0].y + 100, 'W: Attack')
+        for (const key of keyNames){
+            keys[key] = this.input.keyboard.addKey(key)
+        }
+        // this.add.text(this.units[0].x, this.units[0].y + 100, 'W: Attack')
 
         // turn order index tracker
         this.turn = 0
@@ -289,7 +339,7 @@ class BattleScene extends Scene {
         // play all animations
         for (const unit of this.units){
             // attack animations occur on units turn when attacking
-            if (timeout && current_unit === unit && unit.animFrames.includes('attack' + unit.name)){
+            if (timeout === 'attack' && current_unit === unit && unit.animFrames.includes('attack' + unit.name)){
                 unit.anims.play('attack' + unit.name, true)
             } else {
                 unit.anims.play('idle' + unit.name, true)
@@ -303,8 +353,20 @@ class BattleScene extends Scene {
 
         // perform actions of all units
         if (current_unit.type === 'Player'){
-            if (w.isDown){
+            if (keys.space.isDown){
                 current_unit.attack(this.units[1], 1000, 500) 
+            } else if (keys.a.isDown){
+                timeout = true
+                this.buttons.left()
+                setTimeout(() => {
+                    timeout = false
+                }, 300)
+            } else if (keys.d.isDown){
+                timeout = true
+                this.buttons.right()
+                setTimeout(() => {
+                    timeout = false
+                }, 300)
             }
         } else {
             current_unit.attack(this.units[0], 1000, 1000)
