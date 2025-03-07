@@ -83,7 +83,8 @@ class Unit extends GameObjects.Sprite {
             if (this.attacks) {
                 // use selected attack from buttons
                 if (this.buttons){
-                    const attack = this.attacks[this.buttons.center]
+                    const selectedButton = this.buttons.getChildren()[this.buttons.center]
+                    const attack = selectedButton.attack
                     let increase = 1
 
                     if (this.increase){ // multiply damage by 2 and reduce turn count by 1
@@ -105,7 +106,7 @@ class Unit extends GameObjects.Sprite {
                         }
                     }
 
-                    const selectedButton = this.buttons.getChildren()[this.buttons.center]
+                    
                     damage = attack.damage * selectedButton.alpha * increase
                 }
             }
@@ -138,7 +139,10 @@ class Unit extends GameObjects.Sprite {
         if (buttons){
             const children = buttons.getChildren()
             const selectedButton = children[buttons.center]
-            selectedButton.setAlpha(selectedButton.alpha - buttons.attacks[buttons.center].fragility)
+
+            // decreease number of uses by 1 
+            selectedButton.uses--
+            selectedButton.setAlpha(selectedButton.uses / selectedButton.attack.uses)
             
             if (!selectedButton.alpha){ // remove buttons with alpha (opacity) 0
                 const coords = children.map(child => child.x)
@@ -155,8 +159,10 @@ class Unit extends GameObjects.Sprite {
                 buttons.frames--
                 buttons.center++
                 if (buttons.center >= buttons.frames) buttons.center = 0
-                buttons.text.setText(buttons.attacks[buttons.center].description)
             }
+            
+            // update the active button based on changes
+            buttons.activeButton()
         }
     }
 
@@ -276,10 +282,18 @@ class Buttons extends GameObjects.Group{
             }
         }])
 
-        this.attacks = unit.attacks
+        unit.attacks.forEach((attack, index) => {
+            const button = this.getChildren()[index]
+            button.attack = attack
+            button.uses = attack.uses
+        })
+
         this.frames = frames
         this.center = (frames - 1) / 2
-        this.text = scene.add.text(unit.x, unit.y - 200, this.attacks[this.center].description, {color: 'black'})
+
+        const attack = this.getChildren()[this.center].attack
+        this.description = scene.add.text(unit.x, unit.y - 200, attack.description, {color: 'black'})
+        this.uses = scene.add.text(unit.x, unit.y - 125,  `${attack.uses}/${attack.uses}    100% Effective`, {color: 'black'})
     }
 
     right () { // move button coords when left or right
@@ -294,7 +308,7 @@ class Buttons extends GameObjects.Group{
 
         this.center++
         if (this.center >= this.frames) this.center = 0
-        this.text.setText(this.attacks[this.center].description)
+        this.activeButton()
     }
 
     left () {
@@ -309,7 +323,20 @@ class Buttons extends GameObjects.Group{
 
         this.center--
         if (this.center < 0) this.center = this.frames - 1
-        this.text.setText(this.attacks[this.center].description)
+        this.activeButton()
+    }
+
+    activeButton () { // update text for active button
+        const selectedButton = this.getChildren()[this.center]
+        this.description.setText(selectedButton.attack.description)
+
+        let used = `    ${selectedButton.uses}/${selectedButton.attack.uses}`
+        if (selectedButton.uses === Infinity) used = ''
+
+        let effectiveness = Math.floor(selectedButton.uses / selectedButton.attack.uses * 100)
+        if (isNaN(effectiveness)) effectiveness = 100
+
+        this.uses.setText(`${effectiveness}% Effective${used}`)
     }
 }
 

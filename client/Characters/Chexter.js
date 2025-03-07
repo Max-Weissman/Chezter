@@ -27,10 +27,10 @@ export default {
 	}
   },
   attacks: [
-	{damage: 10, fragility: 0, description: '10 damage - Halves incoming damage', effect: 'reduce'},
-	{damage: 20, fragility: 0, description: '20 damage - Taunt an enemy for this turn', effect: 'taunt'},
-	{damage: 30, fragility: 0.25, description: '30 damage - Doubles damage dealt for 3 turns', effect: 'increase'},
-	{damage: 40, fragility: 0.5, description: '40 damage - 50% chance to stun the enemy', effect: 'stun'},
-	{damage: 50, fragility: 0.25, description: '50 damage', effect: ''},
+	{damage: 10, uses: Infinity, description: '10 damage - Halves incoming damage for 3 turns', effect: 'reduce'},
+	{damage: 20, uses: Infinity, description: '20 damage - Taunt an enemy for this turn', effect: 'taunt'},
+	{damage: 30, uses: 4, description: '30 damage - Doubles damage dealt for 3 turns', effect: 'increase'},
+	{damage: 40, uses: 2, description: '40 damage - 50% chance to stun the enemy', effect: 'stun'},
+	{damage: 50, uses: 4, description: '50 damage', effect: ''},
   ]
 };
