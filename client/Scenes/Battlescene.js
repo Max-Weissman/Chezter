@@ -78,16 +78,39 @@ class Unit extends GameObjects.Sprite {
         // take damage when attack hits
         setTimeout(() => {
             let damage = this.damage
+            let stun = false
 
             if (this.attacks) {
                 // use selected attack from buttons
                 if (this.buttons){
+                    const attack = this.attacks[this.buttons.center]
+                    let increase = 1
+
+                    if (this.increase){ // multiply damage by 2 and reduce turn count by 1
+                        increase = 2
+                        this.increase--
+                    }
+
+                    if (attack.effect){ // check attacks for effects
+                        switch(attack.effect){
+                            case 'reduce': // reduce damage by half
+                                this.reduce = 3
+                                break
+                            case 'increase': // increase damage by x2
+                                this.increase = 3
+                                break
+                            case 'stun': // stun enemy for one turn
+                                if (Math.random() > 0.5) stun = true
+                                break
+                        }
+                    }
+
                     const selectedButton = this.buttons.getChildren()[this.buttons.center]
-                    damage = this.attacks[this.buttons.center] * selectedButton.alpha
+                    damage = attack.damage * selectedButton.alpha * increase
                 }
             }
 
-            target.takeDamage(damage * quickTime)
+            target.takeDamage(damage * quickTime, stun)
             setTimeout(() => {
                 this.scene.nextUnit()
                 timeout = false
@@ -96,29 +119,43 @@ class Unit extends GameObjects.Sprite {
 
     }
 
-    takeDamage(damage) {
-        this.hp -= damage
+    takeDamage(damage, stun) {
+        let reduce = 1
+        if (this.reduce){
+            reduce = 2
+            this.reduce--
+        }
+
+        this.hp -= damage / reduce
         this.healthbar.update()
 
-        // lower opacity of attack if selected when hit
-        if (this.buttons){
-            const selectedButton = this.buttons.getChildren()[this.buttons.center]
-            selectedButton.setAlpha(selectedButton.alpha - 0.25)
+        if (stun){
+            this.stunned = true
+        }
 
+        // lower opacity of attack if selected when hit
+        const buttons = this.buttons
+        if (buttons){
+            const children = buttons.getChildren()
+            const selectedButton = children[buttons.center]
+            selectedButton.setAlpha(selectedButton.alpha - buttons.attacks[buttons.center].fragility)
+            
             if (!selectedButton.alpha){ // remove buttons with alpha (opacity) 0
-                const coords = this.buttons.getChildren().map(child => child.x)
-                this.buttons.getChildren().forEach((child, index) => {
+                const coords = children.map(child => child.x)
+                children.forEach((child, index) => {
                     if (child.x > selectedButton.x){
                         let prevIndex = index - 1
-                        if (prevIndex < 0) prevIndex = this.buttons.frames - 1
+                        if (prevIndex < 0) prevIndex = buttons.frames - 1
                         child.setX(coords[prevIndex])
                     }
                 })
 
+                // remove button and center a new button
                 selectedButton.destroy()
-                this.buttons.frames--
-                this.buttons.center++
-                if (this.buttons.center >= this.buttons.frames) this.buttons.center = 0
+                buttons.frames--
+                buttons.center++
+                if (buttons.center >= buttons.frames) buttons.center = 0
+                buttons.text.setText(buttons.attacks[buttons.center].description)
             }
         }
     }
@@ -239,8 +276,10 @@ class Buttons extends GameObjects.Group{
             }
         }])
 
+        this.attacks = unit.attacks
         this.frames = frames
         this.center = (frames - 1) / 2
+        this.text = scene.add.text(unit.x, unit.y - 200, this.attacks[this.center].description, {color: 'black'})
     }
 
     right () { // move button coords when left or right
@@ -255,6 +294,7 @@ class Buttons extends GameObjects.Group{
 
         this.center++
         if (this.center >= this.frames) this.center = 0
+        this.text.setText(this.attacks[this.center].description)
     }
 
     left () {
@@ -269,6 +309,7 @@ class Buttons extends GameObjects.Group{
 
         this.center--
         if (this.center < 0) this.center = this.frames - 1
+        this.text.setText(this.attacks[this.center].description)
     }
 }
 
@@ -280,7 +321,8 @@ class BattleScene extends Scene {
     }
 
     toWorld () {
-        this.scene.switch('WorldScene')
+        this.scene.stop('BattleScene')
+        this.scene.wake('WorldScene')
     }
 
     // end current unit's turn and move to next
@@ -387,7 +429,13 @@ class BattleScene extends Scene {
         // Dont update during this time
         if (timeout){
             return
-        } 
+        }
+
+        if (current_unit.stunned){ // lose a turn if stunned
+            current_unit.stunned = false
+            this.nextUnit()
+            return
+        }
 
         // perform actions of all units
         if (current_unit.type === 'Player'){
