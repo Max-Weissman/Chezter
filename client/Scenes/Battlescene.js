@@ -10,7 +10,7 @@ class Unit extends GameObjects.Sprite {
         super(scene, x, y, texture, frame)
         this.type = type;
         this.maxHp = this.hp = hp;
-        this.damage = damage; // default damage            
+        this.damage = damage; // default damage
     }
 
     attack(target, preAttack, postAttack){
@@ -77,7 +77,17 @@ class Unit extends GameObjects.Sprite {
 
         // take damage when attack hits
         setTimeout(() => {
-            target.takeDamage(this.damage * quickTime)
+            let damage = this.damage
+
+            if (this.attacks) {
+                // use selected attack from buttons
+                if (this.buttons){
+                    const selectedButton = this.buttons.getChildren()[this.buttons.center]
+                    damage = this.attacks[this.buttons.center] * selectedButton.alpha
+                }
+            }
+
+            target.takeDamage(damage * quickTime)
             setTimeout(() => {
                 this.scene.nextUnit()
                 timeout = false
@@ -89,6 +99,28 @@ class Unit extends GameObjects.Sprite {
     takeDamage(damage) {
         this.hp -= damage
         this.healthbar.update()
+
+        // lower opacity of attack if selected when hit
+        if (this.buttons){
+            const selectedButton = this.buttons.getChildren()[this.buttons.center]
+            selectedButton.setAlpha(selectedButton.alpha - 0.25)
+
+            if (!selectedButton.alpha){ // remove buttons with alpha (opacity) 0
+                const coords = this.buttons.getChildren().map(child => child.x)
+                this.buttons.getChildren().forEach((child, index) => {
+                    if (child.x > selectedButton.x){
+                        let prevIndex = index - 1
+                        if (prevIndex < 0) prevIndex = this.buttons.frames - 1
+                        child.setX(coords[prevIndex])
+                    }
+                })
+
+                selectedButton.destroy()
+                this.buttons.frames--
+                this.buttons.center++
+                if (this.buttons.center >= this.buttons.frames) this.buttons.center = 0
+            }
+        }
     }
 
     activeTurn(){
@@ -205,34 +237,38 @@ class Buttons extends GameObjects.Group{
                 y: unit.y - 150,
                 stepX: 100
             }
-
         }])
 
-        this.getChildren().forEach((child, i) => child.setFrame(i))
-
         this.frames = frames
+        this.center = (frames - 1) / 2
     }
 
-    right () {
-        this.getChildren().forEach(child => {
-            const frame = child.frame.name
-            if (frame <= 0){
-                child.setFrame(this.frames - 1)
+    right () { // move button coords when left or right
+        const coords = this.getChildren().map(child => child.x)
+        this.getChildren().forEach((child, index) => {
+            if (index === 0){
+                child.setX(coords[this.frames - 1])
             } else {
-                child.setFrame(frame - 1)
+                child.setX(coords[index - 1])
             }
         })
+
+        this.center++
+        if (this.center >= this.frames) this.center = 0
     }
 
     left () {
-        this.getChildren().forEach(child => {
-            const frame = child.frame.name
-            if (frame >= this.frames - 1){
-                child.setFrame(0)
+        const coords = this.getChildren().map(child => child.x)
+        this.getChildren().forEach((child, index) => {
+            if (index === this.frames - 1){
+                child.setX(coords[0])
             } else {
-                child.setFrame(frame + 1)
+                child.setX(coords[index + 1])
             }
         })
+
+        this.center--
+        if (this.center < 0) this.center = this.frames - 1
     }
 }
 
@@ -298,6 +334,7 @@ class BattleScene extends Scene {
 			const sprite = new Unit(this, column, row * 50 + 300, unit.name, null, unit.type, unit.hp, unit.damage);
             sprite.name = unit.name
             sprite.animFrames = Object.keys(unit.animFrames)
+            sprite.attacks = unit.attacks
        		sprite.setScale(unit.scale * 5)
 
         	this.add.existing(sprite);
@@ -316,6 +353,7 @@ class BattleScene extends Scene {
             if (unit.type === 'Player'){
                 unit.attackBar = new Attackbar(this, unit)
                 this.buttons = new Buttons(this, unit)
+                unit.buttons = this.buttons
                 this.add.existing(this.buttons)
             }
             

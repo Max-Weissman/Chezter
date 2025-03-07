@@ -3,7 +3,7 @@ export default {
   spritesheet: "assets/Chexter.png",
   framesize: { frameWidth: 32, frameHeight: 32 },
   type: "Player",
-  hp: 100,
+  hp: 1000,
   damage: 20,
   scale: 1.2,
   animFrames: {
@@ -25,5 +25,12 @@ export default {
 		],
 		frameRate: 20
 	}
-  }
+  },
+  attacks: [
+	10,
+	20,
+	30,
+	40,
+	50
+  ]
 };

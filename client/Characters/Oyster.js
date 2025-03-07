@@ -4,7 +4,7 @@ export default {
 	framesize: { frameWidth: 32, frameHeight: 32 },
 	type: "Enemy",
 	scale: 1.2,
-	hp: 100,
+	hp: 1000,
 	damage: 20,
 	animFrames: {
 		idle:{
