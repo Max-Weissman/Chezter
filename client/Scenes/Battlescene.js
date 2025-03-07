@@ -145,22 +145,9 @@ class Unit extends GameObjects.Sprite {
             selectedButton.setAlpha(selectedButton.uses / selectedButton.attack.uses)
             
             if (!selectedButton.alpha){ // remove buttons with alpha (opacity) 0
-                const coords = children.map(child => child.x)
-                children.forEach((child, index) => {
-                    if (child.x > selectedButton.x){
-                        let prevIndex = index - 1
-                        if (prevIndex < 0) prevIndex = buttons.frames - 1
-                        child.setX(coords[prevIndex])
-                    }
-                })
-
-                // remove button and center a new button
-                selectedButton.destroy()
-                buttons.frames--
-                buttons.center++
-                if (buttons.center >= buttons.frames) buttons.center = 0
+                buttons.removeButton()
             }
-            
+
             // update the active button based on changes
             buttons.activeButton()
         }
@@ -291,9 +278,9 @@ class Buttons extends GameObjects.Group{
         this.frames = frames
         this.center = (frames - 1) / 2
 
-        const attack = this.getChildren()[this.center].attack
-        this.description = scene.add.text(unit.x, unit.y - 200, attack.description, {color: 'black'})
-        this.uses = scene.add.text(unit.x, unit.y - 125,  `${attack.uses}/${attack.uses}    100% Effective`, {color: 'black'})
+        this.description = scene.add.text(unit.x, unit.y - 200, '', {color: 'black'})
+        this.uses = scene.add.text(unit.x, unit.y - 125, '', {color: 'black'})
+        this.activeButton()
     }
 
     right () { // move button coords when left or right
@@ -327,16 +314,61 @@ class Buttons extends GameObjects.Group{
     }
 
     activeButton () { // update text for active button
-        const selectedButton = this.getChildren()[this.center]
+        const children = this.getChildren()
+        children.forEach(child => child.setScale(1))
+
+        const selectedButton = children[this.center]
+        selectedButton.setScale(1.5)
+
         this.description.setText(selectedButton.attack.description)
 
-        let used = `    ${selectedButton.uses}/${selectedButton.attack.uses}`
+        let used = `    ${selectedButton.uses}/${selectedButton.attack.uses} Uses`
         if (selectedButton.uses === Infinity) used = ''
 
         let effectiveness = Math.floor(selectedButton.uses / selectedButton.attack.uses * 100)
         if (isNaN(effectiveness)) effectiveness = 100
 
         this.uses.setText(`${effectiveness}% Effective${used}`)
+    }
+
+    removeButton () {
+        let rightRemove = true
+        if (this.frames % 2 === 0) rightRemove = false
+
+        this.frames--
+
+        const children = this.getChildren()
+        const selectedButton = children[this.center]
+        const coords = children.map(child => child.x)
+
+        // shift left side to the center
+        if (rightRemove){
+            children.forEach((child, index) => {
+                if (child.x > selectedButton.x){
+                    let prevIndex = index - 1
+                    if (prevIndex < 0) prevIndex = coords.length - 1
+                    child.setX(coords[prevIndex])
+
+                    if (coords[prevIndex] === selectedButton.x){ // set center to the button in the same position as previous center
+                        this.center = index
+                    }
+                }
+            })
+        } else { //shift right side to the center
+            children.forEach((child, index) => {
+                if (child.x < selectedButton.x){
+                    let nextIndex = index +1
+                    if (nextIndex > coords.length - 1) nextIndex = 0
+                    child.setX(coords[nextIndex])
+                    
+                    if (coords[nextIndex] === selectedButton.x){
+                        this.center = index
+                    }
+                }
+            })
+        }
+
+        selectedButton.destroy()
     }
 }
 
