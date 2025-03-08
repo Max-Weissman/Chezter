@@ -30,5 +30,9 @@ export default {
 			],
 		frameRate: 10
 		}
-	}
+	},
+	attacks: [
+		{damage: 20, chance: 3, description: '20'},
+		{damage: 0, effect: '↑', chance: 1, description: '↑'}
+	  ]
   };

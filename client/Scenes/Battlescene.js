@@ -77,10 +77,10 @@ class Unit extends GameObjects.Sprite {
 
         // take damage when attack hits
         setTimeout(() => {
-            let damage = this.damage
+            let damage
             let stun = false
 
-            if (this.attacks) {
+            if (player) {
                 // use selected attack from buttons
                 if (this.buttons){
                     const selectedButton = this.buttons.getChildren()[this.buttons.center]
@@ -109,10 +109,31 @@ class Unit extends GameObjects.Sprite {
                     
                     damage = attack.damage * selectedButton.alpha * increase
                 }
+            } else { // use selected projected attack
+                const attack = this.selectedAttack
+                let increase = 1
+
+                if (this.increase){ // multiply damage by 2 and reduce turn count by 1
+                    increase = 2
+                    this.increase--
+                }
+
+                if (attack.effect){ // check attacks for effects
+                    switch(attack.effect){
+                        case 'increase': // increase damage by x2
+                            this.increase = 3
+                            break
+                    }
+                }
+
+                damage = attack.damage * increase
+                this.text.setText('')
             }
 
             target.takeDamage(damage * quickTime, stun)
             setTimeout(() => {
+                if (!player) this.selectAttack()
+
                 this.scene.nextUnit()
                 timeout = false
             }, postAttack)
@@ -134,9 +155,9 @@ class Unit extends GameObjects.Sprite {
             this.stunned = true
         }
 
-        // lower opacity of attack if selected when hit
+        // lower opacity of attack if selected when hit by damaging attack
         const buttons = this.buttons
-        if (buttons){
+        if (damage && buttons){
             const children = buttons.getChildren()
             const selectedButton = children[buttons.center]
 
@@ -159,6 +180,22 @@ class Unit extends GameObjects.Sprite {
 
     endTurn(){
         this.setTint(0xffaaff, 0xffffff, 0xffffff, 0xffffff)
+    }
+
+    selectAttack() { // pick an attack and forecast it
+        this.totalChance = this.attacks.reduce((prev, current) => {
+            return prev + current.chance
+        }, 0)
+        let chance = Math.floor(Math.random() * this.totalChance)
+        for (const attack of this.attacks){
+            if (attack.chance - 1 >= chance){
+                this.selectedAttack = attack
+                break
+            }
+            chance -= attack.chance
+        }
+
+        this.text.setText(this.selectedAttack.description)
     }
 }
 
@@ -341,6 +378,10 @@ class Buttons extends GameObjects.Group{
         const selectedButton = children[this.center]
         const coords = children.map(child => child.x)
 
+        if (coords.indexOf(selectedButton.x) === coords.length - 1){ // center index resets to 0 if at end, otherwise stays the same
+            this.center = 0
+        }
+
         // shift left side to the center
         if (rightRemove){
             children.forEach((child, index) => {
@@ -348,22 +389,14 @@ class Buttons extends GameObjects.Group{
                     let prevIndex = index - 1
                     if (prevIndex < 0) prevIndex = coords.length - 1
                     child.setX(coords[prevIndex])
-
-                    if (coords[prevIndex] === selectedButton.x){ // set center to the button in the same position as previous center
-                        this.center = index
-                    }
                 }
             })
         } else { //shift right side to the center
             children.forEach((child, index) => {
                 if (child.x < selectedButton.x){
-                    let nextIndex = index +1
+                    let nextIndex = index + 1
                     if (nextIndex > coords.length - 1) nextIndex = 0
                     child.setX(coords[nextIndex])
-                    
-                    if (coords[nextIndex] === selectedButton.x){
-                        this.center = index
-                    }
                 }
             })
         }
@@ -450,12 +483,16 @@ class BattleScene extends Scene {
         // Add healthbars
         for (const unit of this.units) {
             unit.healthbar = new Healthbar(this, unit)
-
+ 
+            // add attackbar and buttons
             if (unit.type === 'Player'){
                 unit.attackBar = new Attackbar(this, unit)
                 this.buttons = new Buttons(this, unit)
                 unit.buttons = this.buttons
                 this.add.existing(this.buttons)
+            } else { // add enemy intent
+                unit.text = this.add.text(unit.x, unit.y - 125, '', {color: 'black'})
+                unit.selectAttack()
             }
             
             unit.endTurn()
@@ -465,7 +502,6 @@ class BattleScene extends Scene {
         for (const key of keyNames){
             keys[key] = this.input.keyboard.addKey(key)
         }
-        // this.add.text(this.units[0].x, this.units[0].y + 100, 'W: Attack')
 
         // turn order index tracker
         this.turn = 0
